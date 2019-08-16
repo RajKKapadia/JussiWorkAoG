@@ -12,8 +12,8 @@ const app = dialogflow({debug:true});
 
 const Airtable = require('airtable');
 
-const API_KEY = 'keyubtTGIzzh7jdXt';
-const APP_ID = 'appLwhTSRaLNLxTxL';
+const API_KEY = process.env.API_KEY;
+const APP_ID = process.env.APP_ID;
 
 Airtable.configure({
     endpointUrl: 'https://api.airtable.com',
