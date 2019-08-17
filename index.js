@@ -173,7 +173,6 @@ app.catch((conv, error) => {
 
 // Server
 const expressApp = express().use(bodyParser.json());
-expressApp.use(bodyParser.urlencoded({extended:true}));
 
 expressApp.get('/', (req, res) => {
     res.send('Hello World.');
