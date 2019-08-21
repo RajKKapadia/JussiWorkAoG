@@ -1,7 +1,5 @@
 const axios = require('axios');
-const dotenv = require('dotenv');
-
-dotenv.config();
+require('dotenv').config();
 
 const APP_ID = process.env.APP_ID;
 const API_KEY = process.env.API_KEY;
