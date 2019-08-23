@@ -139,7 +139,8 @@ app.intent('provides.WORDANSWER', async (conv) => {
         }
 
     } else {
-
+        // Reset the count
+        conv.data.count = 0;
         conv.contexts.set('await_word_answer_2',1);
 
         let ssml = '<speak>'+
@@ -210,6 +211,9 @@ app.intent('provides.WORDANSWER2', async (conv) => {
         }
 
     } else {
+
+        // Reset the count
+        conv.data.count = 0;
 
         conv.data.LQA = conv.data.LQA+1;
 
