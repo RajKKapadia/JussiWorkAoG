@@ -139,8 +139,6 @@ app.intent('provides.WORDANSWER', async (conv) => {
         }
 
     } else {
-        // Reset the count to zero for Level
-        conv.data.count = conv.data.count-1;
 
         conv.contexts.set('await_word_answer_2',1);
 
@@ -212,8 +210,6 @@ app.intent('provides.WORDANSWER2', async (conv) => {
         }
 
     } else {
-        // Reset the count to zero for Level
-        conv.data.count = conv.data.count-1;
 
         conv.data.LQA = conv.data.LQA+1;
 
