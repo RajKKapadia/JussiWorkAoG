@@ -5,26 +5,66 @@ const APP_ID = process.env.APP_ID;
 const API_KEY = process.env.API_KEY;
 
 // Get the Last Question Asked and the Level
-const getLQALevel = async (studentName) => {
+const getUserInfo = async (studentName) => {
 
     url = 'https://api.airtable.com/v0/'+APP_ID+'/Student?view=Grid%20view&filterByFormula=(AND({Name}="'+studentName+'"))&maxRecords=1';
     headers = {
         Authorization: 'Bearer '+API_KEY
     }
     
-    const response = await axios.get(url, {headers});
+    let response = await axios.get(url, {headers});
     let id = response.data.records[0]['id'];
     let ID = response.data.records[0]['fields']['ID'];
     let Name = response.data.records[0]['fields']['Name'];
     let Level = response.data.records[0]['fields']['Level'];
-    let ImageLQA = response.data.records[0]['fields']['ImageLQA'];
     
     return {
         'id': id,
         'ID': ID,
         'Name': Name,
-        'Level': Level,
-        'ImageLQA': ImageLQA
+        'Level': Level
+    }
+};
+
+// Get list of all question id's from the table
+const getAllQuestionList = async (table, level) => {
+    url = `https://api.airtable.com/v0/${APP_ID}/${table}?&view=Grid%20view&filterByFormula=(AND({Difficulty}="${level}"))`;
+    headers = {
+        Authorization: 'Bearer '+API_KEY
+    }
+
+    let response = await axios.get(url, {headers});
+
+    let records =  response.data.records;
+    let qList = [];
+
+    records.forEach(record => {
+        qList.push(record['fields']['QuestionID']);
+    });
+    return qList;
+};
+
+// Get list of all answered questions
+const getAnsweredQuestionList = async (table, studentName) => {
+
+    url = `https://api.airtable.com/v0/${APP_ID}/${table}?&view=Grid%20view&filterByFormula=(AND({Name}="${studentName}"))`;
+    headers = {
+        Authorization: 'Bearer '+API_KEY
+    }
+
+    let response = await axios.get(url, {headers});
+
+    let records =  response.data.records;
+    let aqList = []
+
+    if (records.length == 0) {
+        return aqList;
+    } else {
+
+        records.forEach(record => {
+            aqList.push(record['fields']['QuestionID'])
+        });
+        return aqList;
     }
 };
 
@@ -36,7 +76,7 @@ const getNewQuestion = async (lqa) => {
         Authorization: 'Bearer '+API_KEY
     }
 
-    const response = await axios.get(url, {headers});
+    let response = await axios.get(url, {headers});
 
     if (response.data.records.length == 0) {
         return 0;
@@ -46,7 +86,7 @@ const getNewQuestion = async (lqa) => {
         let Answer = response.data.records[0]['fields']['Answer'];
         let Question = response.data.records[0]['fields']['Question'];
         let Difficulty = response.data.records[0]['fields']['Difficulty'];
-        let ImageURL = response.data.records[0]['fields']['Image'][0]['thumbnails']['small']['url'];
+        let ImageURL = response.data.records[0]['fields']['Image'][0]['thumbnails']['large']['url'];
 
         return {
             'QuestionID': QuestionID,
@@ -67,7 +107,7 @@ const updateStudent = async (studentID, fields) => {
         'Content-Type': 'application/json'
     }
 
-    const response = await axios.patch(url, {fields}, {headers});
+    let response = await axios.patch(url, {fields}, {headers});
 
     if (response.status == 200) {
         return 1;
@@ -84,7 +124,7 @@ const createImageQuestionProgress = async (fields) => {
         'Content-Type': 'application/json'
     }
     
-    const response = await axios.post(url, {fields}, {headers});
+    let response = await axios.post(url, {fields}, {headers});
 
     if (response.status == 200) {
         return 1;
@@ -100,7 +140,7 @@ const getImageQuestionProgressID = async (QID, Name) => {
         Authorization: 'Bearer '+API_KEY
     }
 
-    const response = await axios.get(url, {headers});
+    let response = await axios.get(url, {headers});
 
     let id = response.data.records[0].id;
 
@@ -115,7 +155,7 @@ const updateImageQuestionProgress = async (id, fields) => {
         'Content-Type': 'application/json'
     }
 
-    const response = await axios.patch(url, {fields}, {headers});
+    let response = await axios.patch(url, {fields}, {headers});
 
     if (response.status == 200) {
         return 1;
@@ -125,7 +165,9 @@ const updateImageQuestionProgress = async (id, fields) => {
 };
 
 module.exports = {
-    getLQALevel,
+    getUserInfo,
+    getAllQuestionList,
+    getAnsweredQuestionList,
     getNewQuestion,
     updateStudent,
     createImageQuestionProgress,
