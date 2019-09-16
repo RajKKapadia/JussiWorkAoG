@@ -7,27 +7,38 @@ const API_KEY = process.env.API_KEY;
 // Get the Last Question Asked and the Level
 const getUserInfo = async (studentName) => {
 
-    url = 'https://api.airtable.com/v0/'+APP_ID+'/Student?view=Grid%20view&filterByFormula=(AND({Name}="'+studentName+'"))&maxRecords=1';
+    url = `https://api.airtable.com/v0/${APP_ID}/Student?view=Grid%20view&filterByFormula=(AND({Name}="${studentName}"))&maxRecords=1`;
     headers = {
         Authorization: 'Bearer '+API_KEY
     }
     
     let response = await axios.get(url, {headers});
-    let id = response.data.records[0]['id'];
-    let ID = response.data.records[0]['fields']['ID'];
-    let Name = response.data.records[0]['fields']['Name'];
-    let Level = response.data.records[0]['fields']['Level'];
+
+    let record = response.data.records[0];
+    let fields = record['fields'];
+
+    let id = record['id'];
+    let ID = fields['ID'];
+    let Name = fields['Name'];
+    let memoLevel = fields['Memo'];
+    let conseptsLevel = fields['Consepts'];
+    let mathLevel = fields['Math'];
+    let clockLevel = fields['Clock'];
     
     return {
         'id': id,
         'ID': ID,
         'Name': Name,
-        'Level': Level
+        'memoLevel': memoLevel,
+        'conseptsLevel': conseptsLevel,
+        'mathLevel': mathLevel,
+        'clockLevel': clockLevel
     }
 };
 
 // Get list of all question id's from the table
 const getAllQuestionList = async (table, level) => {
+
     url = `https://api.airtable.com/v0/${APP_ID}/${table}?&view=Grid%20view&filterByFormula=(AND({Difficulty}="${level}"))`;
     headers = {
         Authorization: 'Bearer '+API_KEY
@@ -35,7 +46,7 @@ const getAllQuestionList = async (table, level) => {
 
     let response = await axios.get(url, {headers});
 
-    let records =  response.data.records;
+    let records =  response['data']['records'];
     let qList = [];
 
     records.forEach(record => {
@@ -54,7 +65,7 @@ const getAnsweredQuestionList = async (table, studentName) => {
 
     let response = await axios.get(url, {headers});
 
-    let records =  response.data.records;
+    let records =  response['data']['records'];
     let aqList = []
 
     if (records.length == 0) {
@@ -68,39 +79,71 @@ const getAnsweredQuestionList = async (table, studentName) => {
     }
 };
 
-// Get the new question on LQA
-const getNewQuestion = async (lqa) => {
+// Get the new question on Question Number
+const getNewQuestion = async (table, qn) => {
 
-    url = 'https://api.airtable.com/v0/'+APP_ID+'/ImageQuestions?view=Grid%20view&filterByFormula=(AND({QuestionID}="'+lqa+'"))&maxRecords=1';
+    url = `https://api.airtable.com/v0/${APP_ID}/${table}?view=Grid%20view&filterByFormula=(AND({QuestionID}="${qn}"))&maxRecords=1`;
     headers = {
         Authorization: 'Bearer '+API_KEY
     }
 
     let response = await axios.get(url, {headers});
 
-    if (response.data.records.length == 0) {
+    if (response['data']['records'].length == 0) {
         return 0;
     } else {
-        let QuestionID = response.data.records[0]['fields']['QuestionID'];
-        let Hint = response.data.records[0]['fields']['Hint'];
-        let Answer = response.data.records[0]['fields']['Answer'];
-        let Question = response.data.records[0]['fields']['Question'];
-        let Difficulty = response.data.records[0]['fields']['Difficulty'];
-        let ImageURL = response.data.records[0]['fields']['Image'][0]['thumbnails']['large']['url'];
 
-        return {
+        let record = response.data.records[0];
+        let fields = record['fields'];
+
+        let QuestionID = fields['QuestionID'];
+        let Hint = fields['Hint'];
+        let HintImage = fields['HintImage'];
+        let Answer = fields['Answer'];
+        let Question = fields['Question'];
+        let Difficulty = fields['Difficulty'];
+        let ImageURL = fields['Image'][0]['thumbnails']['large']['url'];
+
+        let result = {
             'QuestionID': QuestionID,
-            'Hint': Hint,
             'Answer': Answer,
             'Question': Question,
             'Difficulty': Difficulty,
             'ImageURL': ImageURL
+        };
+
+        if (Hint == undefined && HintImage == undefined) {
+
+            result['HA'] = 0;
+            result['HIA'] = 0;
+
+        } else if (Hint != undefined && HintImage == undefined) {
+            
+            result['HA'] = 1;
+            result['Hint'] = Hint;
+            result['HIA'] = 0;
+
+        } else if (Hint == undefined && HintImage != undefined) {
+            
+            result['HA'] = 0;
+            result['HIA'] = 1;
+            result['HintImageURL'] = HintImage[0]['thumbnails']['large']['url'];
+            
+        } else {
+            
+            result['HA'] = 1;
+            result['Hint'] = Hint;
+            result['HIA'] = 1;
+            result['HintImageURL'] = HintImage[0]['thumbnails']['large']['url'];
         }
+
+        return result;
     }
 };
 
 // Update the student data
 const updateStudent = async (studentID, fields) => {
+
     url = `https://api.airtable.com/v0/${APP_ID}/Student/${studentID}`;
     headers = {
         'Authorization': 'Bearer '+API_KEY,
@@ -117,8 +160,9 @@ const updateStudent = async (studentID, fields) => {
 };
 
 // Create ImageQuestionProgress
-const createImageQuestionProgress = async (fields) => {
-    url = `https://api.airtable.com/v0/${APP_ID}/ImageQuestionsProgress`;
+const createProgress = async (table, fields) => {
+
+    url = `https://api.airtable.com/v0/${APP_ID}/${table}Progress`;
     headers = {
         'Authorization': 'Bearer '+API_KEY,
         'Content-Type': 'application/json'
@@ -133,23 +177,28 @@ const createImageQuestionProgress = async (fields) => {
     }
 };
 
-// Get Image Question Progress data
-const getImageQuestionProgressID = async (QID, Name) => {
-    url = 'https://api.airtable.com/v0/'+APP_ID+'/ImageQuestionsProgress?view=Grid%20view&filterByFormula=(AND({QuestionID}="'+QID+'", {Name}="'+Name+'"))&maxRecords=1';
+// Get Question Progress data
+const getProgressByID = async (table, QID, Name) => {
+
+    url = `https://api.airtable.com/v0/${APP_ID}/${table}Progress?view=Grid%20view&filterByFormula=(AND({QuestionID}="${QID}", {Name}="${Name}"))&maxRecords=1`;
     headers = {
         Authorization: 'Bearer '+API_KEY
     }
 
     let response = await axios.get(url, {headers});
 
-    let id = response.data.records[0].id;
-
-    return id;
+    if (response['data']['records'].length == 0) {
+        return 0;
+    } else {
+        let id = response['data']['records'][0]['id'];
+        return id;
+    }
 };
 
 // Update Image Question Progress
-const updateImageQuestionProgress = async (id, fields) => {
-    url = `https://api.airtable.com/v0/${APP_ID}/ImageQuestionsProgress/${id}`;
+const updateProgress = async (table, id, fields) => {
+
+    url = `https://api.airtable.com/v0/${APP_ID}/${table}Progress/${id}`;
     headers = {
         'Authorization': 'Bearer '+API_KEY,
         'Content-Type': 'application/json'
@@ -164,13 +213,70 @@ const updateImageQuestionProgress = async (id, fields) => {
     }
 };
 
+// Get the message for Congratulations and NExt Level
+const getCongratsMessage = async (type) => {
+
+    url = `https://api.airtable.com/v0/${APP_ID}/CongratulationMessages?view=Grid%20view&filterByFormula=(AND({Name}="${type}"))&maxRecords=1`;
+    headers = {
+        Authorization: 'Bearer '+API_KEY
+    }
+
+    let response = await axios.get(url, {headers});
+    let records = response['data']['records'];
+    let pickNumb = Math.floor(Math.random() * Math.floor(records.length));
+
+    let message = records[pickNumb];
+    
+    if (message['fields']['Image'] == undefined) {
+        return {
+            'Image': 0,
+            'Message': message['fields']['Message']
+        };
+    } else {
+        return {
+            'Image': 1,
+            'Message': message['fields']['Message'],
+            'ImageURL': message['fields']['Image'][0]['thumbnails']['large']['url']
+        };
+    }
+}
+
+const getItemFromEShop = async (itemName) => {
+
+    url = `https://api.airtable.com/v0/${APP_ID}/Items?view=Grid%20view&filterByFormula=(AND({Name}="${itemName}"))&maxRecords=1`;
+    headers = {
+        Authorization: 'Bearer '+API_KEY
+    }
+
+    let response = await axios.get(url, {headers});
+
+    let record = response['data']['records'][0];
+
+    if (record === undefined) {
+        return {
+            'status': 0,
+        }
+    } else {
+
+        return {
+            'status': 1,
+            'Name': record['fields']['Name'],
+            'Price': record['fields']['Price'],
+            'ImageURL': record['fields']['Image'][0]['thumbnails']['large']['url'],
+        }
+        
+    }
+}
+
 module.exports = {
     getUserInfo,
     getAllQuestionList,
     getAnsweredQuestionList,
     getNewQuestion,
     updateStudent,
-    createImageQuestionProgress,
-    getImageQuestionProgressID,
-    updateImageQuestionProgress
+    createProgress,
+    getProgressByID,
+    updateProgress,
+    getCongratsMessage,
+    getItemFromEShop
 }
