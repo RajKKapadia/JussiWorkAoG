@@ -238,7 +238,7 @@ app.intent('Provides-Answer-First', async (conv) => {
             console.log('Error at Create Progress First Answer --> ', error);
         });
 
-    let ansTempList = userAnswer.split(',');
+    let ansTempList = actualAnswer.split(',');
 
     let ansList = [];
 
@@ -246,7 +246,7 @@ app.intent('Provides-Answer-First', async (conv) => {
         ansList.push(element.toLowerCase());
     });
 
-    if (ansList.includes(actualAnswer.toLowerCase())) {
+    if (ansList.includes(userAnswer.toLowerCase())) {
 
         let message = await ad.getCongratsMessage('Right Answer');
 
@@ -356,6 +356,8 @@ app.intent('Provides-Answer-First', async (conv) => {
             ssml = '<speak>' +
                 'It is a wrong answer.' +
                 '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
+                '<break time="200ms"/>' +
+                'Please try again.' +
                 '</speak>';
             conv.ask(ssml); 
         } else if (conv.data.Hint != 0 && conv.data.HintImageURL == 0) {
@@ -370,6 +372,7 @@ app.intent('Provides-Answer-First', async (conv) => {
             ssml = '<speak>' +
                 'It is a wrong answer.' +
                 '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
+                'See the hint image.' +
                 '</speak>';
             conv.ask(ssml);
             conv.ask(new BasicCard({
@@ -426,7 +429,7 @@ app.intent('Provides-Answer-Second', async (conv) => {
         });
     }
 
-    let ansTempList = userAnswer.split(',');
+    let ansTempList = actualAnswer.split(',');
 
     let ansList = [];
 
@@ -434,7 +437,7 @@ app.intent('Provides-Answer-Second', async (conv) => {
         ansList.push(element.toLowerCase());
     });
 
-    if (ansList.includes(actualAnswer.toLowerCase())) {
+    if (ansList.includes(userAnswer.toLowerCase())) {
 
         let message = await ad.getCongratsMessage('Right Answer');
 
