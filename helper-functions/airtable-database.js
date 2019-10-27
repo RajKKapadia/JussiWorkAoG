@@ -7,6 +7,8 @@ const API_KEY = process.env.API_KEY;
 // Get the Last Question Asked and the Level
 const getUserInfo = async (studentName) => {
 
+    studentName = studentName.charAt(0).toUpperCase() + studentName.slice(1);
+
     url = `https://api.airtable.com/v0/${APP_ID}/Student?view=Grid%20view&filterByFormula=(AND({Name}="${studentName}"))&maxRecords=1`;
     headers = {
         Authorization: 'Bearer '+API_KEY
@@ -239,8 +241,9 @@ const getCongratsMessage = async (type) => {
             'ImageURL': message['fields']['Image'][0]['thumbnails']['large']['url']
         };
     }
-}
+};
 
+// Get the item from E-Shpp
 const getItemFromEShop = async (itemName) => {
 
     url = `https://api.airtable.com/v0/${APP_ID}/Items?view=Grid%20view&filterByFormula=(AND({Name}="${itemName}"))&maxRecords=1`;
@@ -266,7 +269,28 @@ const getItemFromEShop = async (itemName) => {
         }
         
     }
-}
+};
+
+// Get all usernames
+const getUserNames = async () => {
+
+    url = `https://api.airtable.com/v0/${APP_ID}/Student`;
+    headers = {
+        Authorization: 'Bearer '+API_KEY
+    }
+
+    let response = await axios.get(url, {headers});
+
+    let records = response['data']['records'];
+
+    let Names = [];
+
+    records.forEach(record => {
+        Names.push(record['fields']['Name']);
+    });
+
+    return Names;
+};
 
 module.exports = {
     getUserInfo,
@@ -278,5 +302,6 @@ module.exports = {
     getProgressByID,
     updateProgress,
     getCongratsMessage,
-    getItemFromEShop
+    getItemFromEShop,
+    getUserNames
 }
