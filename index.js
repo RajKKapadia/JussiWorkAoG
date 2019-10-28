@@ -237,6 +237,13 @@ app.intent('Provides-Answer-First', async (conv) => {
     let actualAnswer = conv.data.Answer;
     let userAnswer = conv.query;
 
+    if (userAnswer.toLowerCase() === 'menu') {
+        console.log('came here.');
+        conv.followup('menu', {
+            type: 'menu'
+        });
+    }
+
     // Create new record for ImageQuestionProgress
     fields = {
         'Name': conv.data.studentName,
@@ -357,9 +364,12 @@ app.intent('Provides-Answer-First', async (conv) => {
             }
 
         } else {
-            conv.contexts.set('await-continue-yes', 1);
-            conv.ask('Would you like to continue?');
-            conv.ask(new Suggestions('Yes', 'No', 'Menu'));
+            // conv.contexts.set('await-continue-yes', 1);
+            // conv.ask('Would you like to continue?');
+            // conv.ask(new Suggestions('Yes', 'No', 'Menu'));
+            conv.followup('question', {
+                type: 'Word'
+            });
         }
 
     } else {
@@ -414,8 +424,6 @@ app.intent('Provides-Answer-First', async (conv) => {
                 display: 'WHITE'
             }));
         }
-
-
     }
 });
 
@@ -425,6 +433,13 @@ app.intent('Provides-Answer-Second', async (conv) => {
     // let clapURL = 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/emojidex/59/clapping-hands-sign_emoji-modifier-fitzpatrick-type-5_1f44f-1f3fe_1f3fe.png';
     let actualAnswer = conv.data.Answer;
     let userAnswer = conv.query;
+
+    if (userAnswer.toLowerCase() === 'menu') {
+        console.log('came here.');
+        conv.followup('menu', {
+            type: 'menu'
+        });
+    }
 
     // Update ImageQuestionProgress
     fields = {
@@ -547,9 +562,12 @@ app.intent('Provides-Answer-Second', async (conv) => {
             }
 
         } else {
-            conv.contexts.set('await-continue-yes', 1);
-            conv.ask('Would you like to continue?');
-            conv.ask(new Suggestions('Yes', 'No', 'Menu'));
+            // conv.contexts.set('await-continue-yes', 1);
+            // conv.ask('Would you like to continue?');
+            // conv.ask(new Suggestions('Yes', 'No', 'Menu'));
+            conv.followup('question', {
+                type: 'Word'
+            });
         }
 
     } else {
@@ -563,8 +581,7 @@ app.intent('Provides-Answer-Second', async (conv) => {
         // Ask new question here
         conv.contexts.set('await-continue-yes', 1);
         conv.ask(`Not quite. The answer is ` + actualAnswer + `. Do you want another question?`);
-        conv.ask(new Suggestions('Yes', 'No', 'Menu')); 
-        
+        conv.ask(new Suggestions('Yes', 'No', 'Menu'));
     }
 });
 
