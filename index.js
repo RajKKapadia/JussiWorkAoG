@@ -87,17 +87,18 @@ app.intent('Provides-Name', async (conv, params) => {
 // Step - 2 Choice is WORD
 app.intent('Ask-First-Question', async (conv) => {
 
-    conv.data.Type = conv.query;
+    conv.data.Type = conv.query.charAt(0).toUpperCase()+conv.query.slice(1);
+    
     let qList = [];
 
     // Generate question list
-    if (conv.query === 'Memo') {
+    if (conv.data.Type === 'Memo') {
         qList = await ad.getAllQuestionList('Memo', conv.data.memoLevel);
-    } else if (conv.query === 'Consepts') {
+    } else if (conv.data.Type === 'Consepts') {
         qList = await ad.getAllQuestionList('Consepts', conv.data.conseptsLevel);
-    } else if (conv.query === 'Math') {
+    } else if (conv.data.Type === 'Math') {
         qList = await ad.getAllQuestionList('Math', conv.data.mathLevel);
-    } else if (conv.query === 'Clock') {
+    } else if (conv.data.Type === 'Clock') {
         qList = await ad.getAllQuestionList('Clock', conv.data.clockLevel);
     }
 
@@ -171,13 +172,13 @@ app.intent('Ask-Question', async (conv) => {
     if (cqn === undefined) {
         let qList = [];
         // Generate question list
-        if (conv.query === 'Memo') {
+        if (conv.data.Type === 'Memo') {
             qList = await ad.getAllQuestionList('Memo', conv.data.memoLevel);
-        } else if (conv.query === 'Consepts') {
+        } else if (conv.data.Type === 'Consepts') {
             qList = await ad.getAllQuestionList('Consepts', conv.data.conseptsLevel);
-        } else if (conv.query === 'Math') {
+        } else if (conv.data.Type === 'Math') {
             qList = await ad.getAllQuestionList('Math', conv.data.mathLevel);
-        } else if (conv.query === 'Clock') {
+        } else if (conv.data.Type === 'Clock') {
             qList = await ad.getAllQuestionList('Clock', conv.data.clockLevel);
         }
         conv.data.uaList = qList;
