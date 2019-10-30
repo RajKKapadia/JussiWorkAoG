@@ -236,7 +236,7 @@ app.intent('Ask-Question', async (conv) => {
 // Step - 3 User provides the answer
 app.intent('Provides-Answer-First', async (conv) => {
     
-    // let clapURL = 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/emojidex/59/clapping-hands-sign_emoji-modifier-fitzpatrick-type-5_1f44f-1f3fe_1f3fe.png';
+    let clapURL = 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/emojidex/59/clapping-hands-sign_emoji-modifier-fitzpatrick-type-5_1f44f-1f3fe_1f3fe.png';
     let actualAnswer = conv.data.Answer;
     let userAnswer = conv.query;
 
@@ -278,20 +278,20 @@ app.intent('Provides-Answer-First', async (conv) => {
 
         if (message['Image'] == 0) {
             conv.ask(message['Message']);
-            // conv.ask(new BasicCard({
-            //     image: new Image({
-            //         url: clapURL,
-            //         alt: 'Clap Image'
-            //     })
-            // }));
+            conv.ask(new BasicCard({
+                image: new Image({
+                    url: clapURL,
+                    alt: 'Clap Image'
+                })
+            }));
         } else {
             conv.ask(message['Message']);
-            // conv.ask(new BasicCard({
-            //     image: new Image({
-            //         url: message['ImageURL'],
-            //         alt: 'Congratulation Image'
-            //     })
-            // }));
+            conv.ask(new BasicCard({
+                image: new Image({
+                    url: message['ImageURL'],
+                    alt: 'Congratulation Image'
+                })
+            }));
         }
 
         // Increment the count of right answer
@@ -348,31 +348,27 @@ app.intent('Provides-Answer-First', async (conv) => {
                 let message = await ad.getCongratsMessage('Level Up');
 
                 if (message['Image'] == 0) {
-                    let m = message['Message'] + 'Would you like to continue?';
+                    let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Yes', 'No', 'Menu'));
+                    conv.ask(new Suggestions('Next Question', 'Menu'));
                 } else {
-                    let m = message['Message'] + 'Would you like to continue?';
+                    let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Yes', 'No', 'Menu'));
-                    conv.ask(new BasicCard({
-                        image: new Image({
-                            url: message['ImageURL'],
-                            alt: 'Level Up Image'
-                        })
-                    }));
+                    conv.ask(new Suggestions('Next Question', 'Menu'));
+                    // conv.ask(new BasicCard({
+                    //     image: new Image({
+                    //         url: message['ImageURL'],
+                    //         alt: 'Level Up Image'
+                    //     })
+                    // }));
                 }
             } else {
                 conv.ask('Sorry, I encountered an error. Try agin after sometime.')
             }
 
         } else {
-            // conv.contexts.set('await-continue-yes', 1);
-            // conv.ask('Would you like to continue?');
-            // conv.ask(new Suggestions('Yes', 'No', 'Menu'));
-            conv.followup('question', {
-                type: 'Word'
-            });
+            conv.contexts.set('await-continue-yes', 1);
+            conv.ask(new Suggestions('Next Question', 'Menu'));
         }
 
     } else {
@@ -433,7 +429,7 @@ app.intent('Provides-Answer-First', async (conv) => {
 // User provides answer second time
 app.intent('Provides-Answer-Second', async (conv) => {
 
-    // let clapURL = 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/emojidex/59/clapping-hands-sign_emoji-modifier-fitzpatrick-type-5_1f44f-1f3fe_1f3fe.png';
+    let clapURL = 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/emojidex/59/clapping-hands-sign_emoji-modifier-fitzpatrick-type-5_1f44f-1f3fe_1f3fe.png';
     let actualAnswer = conv.data.Answer;
     let userAnswer = conv.query;
 
@@ -477,20 +473,20 @@ app.intent('Provides-Answer-Second', async (conv) => {
 
         if (message['Image'] == 0) {
             conv.ask(message['Message']);
-            // conv.ask(new BasicCard({
-            //     image: new Image({
-            //         url: clapURL,
-            //         alt: 'Clap Image'
-            //     })
-            // }));
+            conv.ask(new BasicCard({
+                image: new Image({
+                    url: clapURL,
+                    alt: 'Clap Image'
+                })
+            }));
         } else {
             conv.ask(message['Message']);
-            // conv.ask(new BasicCard({
-            //     image: new Image({
-            //         url: message['ImageURL'],
-            //         alt: 'Congratulation Image'
-            //     })
-            // }));
+            conv.ask(new BasicCard({
+                image: new Image({
+                    url: message['ImageURL'],
+                    alt: 'Congratulation Image'
+                })
+            }));
         }
 
         // Increment the count of right answer
@@ -545,19 +541,19 @@ app.intent('Provides-Answer-Second', async (conv) => {
                 let message = await ad.getCongratsMessage('Level Up');
 
                 if (message['Image'] == 0) {
-                    let m = message['Message'] + ' Would you like to continue?';
+                    let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Yes', 'No', 'Menu'));
+                    conv.ask(new Suggestions('Next Question', 'Menu'));
                 } else {
-                    let m = message['Message'] + ' Would you like to continue?';
+                    let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Yes', 'No', 'Menu'));
-                    conv.ask(new BasicCard({
-                        image: new Image({
-                            url: message['ImageURL'],
-                            alt: 'Level Up Image'
-                        })
-                    }));
+                    conv.ask(new Suggestions('Next Question', 'Menu'));
+                    // conv.ask(new BasicCard({
+                    //     image: new Image({
+                    //         url: message['ImageURL'],
+                    //         alt: 'Level Up Image'
+                    //     })
+                    // }));
                 } 
 
             } else {
@@ -565,12 +561,8 @@ app.intent('Provides-Answer-Second', async (conv) => {
             }
 
         } else {
-            // conv.contexts.set('await-continue-yes', 1);
-            // conv.ask('Would you like to continue?');
-            // conv.ask(new Suggestions('Yes', 'No', 'Menu'));
-            conv.followup('question', {
-                type: 'Word'
-            });
+            conv.contexts.set('await-continue-yes', 1);
+            conv.ask(new Suggestions('Next Question', 'Menu'));
         }
 
     } else {
@@ -583,8 +575,8 @@ app.intent('Provides-Answer-Second', async (conv) => {
         
         // Ask new question here
         conv.contexts.set('await-continue-yes', 1);
-        conv.ask(`Not quite. The answer is ` + actualAnswer + `. Do you want another question?`);
-        conv.ask(new Suggestions('Yes', 'No', 'Menu'));
+        conv.ask(`Not quite. The answer is ` + actualAnswer + `.`);
+        conv.ask(new Suggestions('Next Question', 'Menu'));
     }
 });
 
