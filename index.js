@@ -21,12 +21,12 @@ const app = dialogflow({
 // Error handling
 app.catch((conv, error) => {
     console.error('Error at conv catch --> ', error);
-    conv.ask('I encountered a glitch. Can you say that again?');
+    conv.ask('I encountered a glitch. Please try again after some time.');
 });
 
 // Fallback
 app.fallback((conv) => {
-    conv.ask(`I couldn't understand. Can you say that again?`);
+    conv.ask(`I couldn't understand. Please try again after some time.`);
 });
 
 // Initialize
@@ -34,6 +34,9 @@ app.intent('Default Welcome Intent', async (conv) => {
 
     // Get all the user names
     let names = await ad.getUserNames();
+
+    // Set Default Fallback Count
+    conv.data.fallbackCount = 0;
 
     // Set the context
     conv.contexts.set('await-student-name', 1);
@@ -635,6 +638,29 @@ app.intent('Continue-No', (conv) => {
 
 app.intent('Cancel', (conv) => {
     conv.close(`Thank you ${conv.data.studentName} for using the app.`);
+});
+
+app.intent('Default Fallback Intent', (conv) => {
+
+    conv.data.fallbackCount = conv.data.fallbackCount+1;
+
+    let contexts = conv.contexts.input;
+
+    for (const key in contexts) {
+        if (contexts.hasOwnProperty(key)) {
+            if (contexts[key]['name'].includes('await-')) {
+                let vals = contexts[key]['name'].split('/');
+                getContext = vals[vals.length-1]
+            }
+        }
+    }
+
+    if (conv.data.fallbackCount < 10) {
+        conv.contexts.set(getContext, 1);
+        conv.ask('Please say it again.');
+    } else {
+        conv.close('Sorry, I am facing trouble hearing you, try again after sometime.');
+    }
 });
 
 // Webserver
