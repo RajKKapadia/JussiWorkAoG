@@ -43,7 +43,7 @@ app.intent('Default Welcome Intent', async (conv) => {
 
     conv.ask('Hi, I welcome to OVO quiz!');
     conv.ask(new BasicCard({
-        text: 'Please choose a username.',
+        text: 'Please choose a username: ',
         image: new Image({
             url: 'https://firebasestorage.googleapis.com/v0/b/ovobot-quiz.appspot.com/o/images%2FOVObot_1024x1024.png?alt=media&token=401b1fba-90c7-4a36-9dd6-183611178d8a',
             alt: 'OVO Bot Logo'
@@ -59,9 +59,10 @@ app.intent('Provides-Name', async (conv, params) => {
 
     let studentName = params['person']['name'];
 
-    try {
-        // Get student details
-        let record = await ad.getUserInfo(studentName);
+    // Get student details
+    let record = await ad.getUserInfo(studentName);
+
+    if (record['status'] == 1) {
 
         conv.data.studentName = studentName;
         conv.data.studentID = record['id'];
@@ -82,8 +83,11 @@ app.intent('Provides-Name', async (conv, params) => {
 
         conv.ask(`Hello ${studentName}, What would you like to practice today?`);
         conv.ask(new Suggestions('Memo', 'Consepts', 'Clock', 'Math', 'E-Shop'));
-    } catch (error) {
-        console.log('Error at Provides Name --> ', error);
+        
+    } else {
+        
+        conv.close(`Sorry ${studentName}, I did not find your name, please contact Admin.`);
+        
     }
 });
 
