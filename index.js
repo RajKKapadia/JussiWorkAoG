@@ -21,7 +21,7 @@ const app = dialogflow({
 // Error handling
 app.catch((conv, error) => {
     console.error('Error at conv catch --> ', error);
-    conv.ask('I encountered a glitch. Please try again after some time.');
+    conv.close('I encountered a glitch. Please try again after some time.');
 });
 
 // Fallback
@@ -83,19 +83,21 @@ app.intent('Provides-Name', async (conv, params) => {
 
         conv.ask(`Hello ${studentName}, What would you like to practice today?`);
         conv.ask(new Suggestions('Memo', 'Consepts', 'Clock', 'Math', 'E-Shop'));
-        
+
     } else {
-        
+
         conv.close(`Sorry ${studentName}, I did not find your name, please contact Admin.`);
-        
+
     }
 });
 
 // Step - 2 Choice is WORD
 app.intent('Ask-First-Question', async (conv) => {
 
+    // This is to save the question type
     conv.data.Type = conv.query.charAt(0).toUpperCase() + conv.query.slice(1);
 
+    // Empty question list
     let qList = [];
 
     // Generate question list
@@ -109,8 +111,10 @@ app.intent('Ask-First-Question', async (conv) => {
         qList = await ad.getAllQuestionList('Clock', conv.data.clockLevel);
     }
 
-    let aqList = await ad.getAnsweredQuestionList(`${conv.data.Type}Progress`, conv.data.studentName);
+    // Answered question list
+    let aqList = await ad.getAnsweredQuestionList(conv.data.studentName);
 
+    // Un Answered question list
     let uaList = qList.filter(x => !aqList.includes(x));
 
     if (uaList.length == 0) {
@@ -119,11 +123,12 @@ app.intent('Ask-First-Question', async (conv) => {
         conv.data.uaList = uaList;
     }
 
-    // Current number of question
+    // Current number for question
     let cn = conv.data.qn;
     // Current question number
     let cqn = conv.data.uaList[cn];
 
+    // Get the question
     let record = await ad.getNewQuestion(conv.data.Type, cqn);
 
     if (record == 0) {
@@ -135,24 +140,15 @@ app.intent('Ask-First-Question', async (conv) => {
         let Question = record['Question'];
         let ImageURL = record['ImageURL'];
         let QID = record['QuestionID'];
-        let Hint, HintImageURL;
-
-        if (record['HA'] != 0) {
-            Hint = record['Hint'];
-        } else {
-            Hint = 0;
-        }
-
-        if (record['HIA'] != 0) {
-            HintImageURL = record['HintImageURL'];
-        } else {
-            HintImageURL = 0;
-        }
+        let Hint = record['Hint'];
+        let HintImageURL = record['HintImage'];
+        let HintText = record['HintText'];
 
         conv.contexts.set('await-answer-first', 1);
 
         conv.data.Hint = Hint;
         conv.data.HintImageURL = HintImageURL;
+        conv.data.HintText = HintText
         conv.data.Answer = Answer;
         conv.data.Question = Question;
         conv.data.ImageURL = ImageURL;
@@ -193,6 +189,7 @@ app.intent('Ask-Question', async (conv) => {
         cqn = conv.data.uaList[cn];
     }
 
+    // Get the question data
     let record = await ad.getNewQuestion(conv.data.Type, cqn);
 
     if (record == 0) {
@@ -204,24 +201,15 @@ app.intent('Ask-Question', async (conv) => {
         let Question = record['Question'];
         let ImageURL = record['ImageURL'];
         let QID = record['QuestionID'];
-        let Hint, HintImageURL;
-
-        if (record['HA'] != 0) {
-            Hint = record['Hint'];
-        } else {
-            Hint = 0;
-        }
-
-        if (record['HIA'] != 0) {
-            HintImageURL = record['HintImageURL'];
-        } else {
-            HintImageURL = 0;
-        }
+        let Hint = record['Hint'];
+        let HintImageURL = record['HintImage'];
+        let HintText = record['HintText'];
 
         conv.contexts.set('await-answer-first', 1);
 
         conv.data.Hint = Hint;
         conv.data.HintImageURL = HintImageURL;
+        conv.data.HintText = HintText;
         conv.data.Answer = Answer;
         conv.data.Question = Question;
         conv.data.ImageURL = ImageURL;
@@ -236,10 +224,7 @@ app.intent('Ask-Question', async (conv) => {
             display: 'WHITE'
         }));
     }
-
-
 });
-
 
 // Step - 3 User provides the answer
 app.intent('Provides-Answer-First', async (conv) => {
@@ -249,7 +234,6 @@ app.intent('Provides-Answer-First', async (conv) => {
     let userAnswer = conv.query;
 
     if (userAnswer.toLowerCase() === 'menu') {
-        console.log('came here.');
         conv.followup('menu', {
             type: 'menu'
         });
@@ -264,24 +248,27 @@ app.intent('Provides-Answer-First', async (conv) => {
         'Answer2': 'NA'
     }
 
-    ad.createProgress(conv.data.Type, fields)
+    // Insert the progress to the table
+    ad.createProgress(conv.data.studentName, fields)
         .then((flag) => {
             // Use the flag here
+            console.log('Status --> ', flag);
+            console.log('Data inserted into progress table.');
         })
         .catch((error) => {
-            console.log('Error at Create Progress First Answer --> ', error);
+            console.log('Error at createProgree [First - Answer] --> ', error);
         });
 
+    // Generate list from actual answeres in case different answeres
     let ansTempList = actualAnswer.split(',');
-
     let ansList = [];
-
     ansTempList.forEach(element => {
         ansList.push(element.toLowerCase());
     });
 
     if (ansList.includes(userAnswer.toLowerCase())) {
 
+        // Get the right answer message
         let message = await ad.getCongratsMessage('Right Answer');
 
         if (message['Image'] == 0) {
@@ -313,8 +300,8 @@ app.intent('Provides-Answer-First', async (conv) => {
             // Update student level
             let cLevel = conv.data[`${conv.data.Type.toLowerCase()}Level`];
 
+            // Generate the string LevelX
             let nLevel = parseInt(cLevel.split('l')[1]) + 1;
-
             if (conv.data.Type === 'Memo') {
                 fields = {
                     'Memo': `Level${nLevel}`
@@ -339,7 +326,7 @@ app.intent('Provides-Answer-First', async (conv) => {
 
             let flag = await ad.updateStudent(conv.data.studentID, fields);
 
-            // Get question list
+            // Get all the questions from new Level
             let qList = await ad.getAllQuestionList(conv.data.Type, `Level${nLevel}`);
             conv.data.uaList = qList;
 
@@ -358,17 +345,11 @@ app.intent('Provides-Answer-First', async (conv) => {
                 if (message['Image'] == 0) {
                     let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Next Question', 'Menu'));
+                    conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 } else {
                     let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Next Question', 'Menu'));
-                    // conv.ask(new BasicCard({
-                    //     image: new Image({
-                    //         url: message['ImageURL'],
-                    //         alt: 'Level Up Image'
-                    //     })
-                    // }));
+                    conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 }
             } else {
                 conv.ask('Sorry, I encountered an error. Try agin after sometime.')
@@ -376,16 +357,60 @@ app.intent('Provides-Answer-First', async (conv) => {
 
         } else {
             conv.contexts.set('await-continue-yes', 1);
-            conv.ask(new Suggestions('Next Question', 'Menu'));
+            conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
         }
 
     } else {
 
         conv.contexts.set('await-answer-second', 1);
 
-        let ssml;
-
-        if (conv.data.Hint == 0 && conv.data.HintImageURL == 0) {
+        if (conv.data.HintText != 0) {
+            if (conv.data.HintImageURL != 0) {
+                // Show card with hint image and text
+                let ssml;
+                ssml = '<speak>' +
+                    'It is a wrong answer.' +
+                    '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
+                    '</speak>';
+                conv.ask(ssml);
+                conv.ask(new BasicCard({
+                    image: new Image({
+                        url: conv.data.HintImageURL,
+                        alt: 'Hint Image'
+                    }),
+                    display: 'WHITE',
+                    title: conv.data.HintText
+                }));
+            } else {
+                // Show card with image and text
+                let ssml;
+                ssml = '<speak>' +
+                    'It is a wrong answer.' +
+                    '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
+                    '</speak>';
+                conv.ask(ssml);
+                conv.ask(new BasicCard({
+                    image: new Image({
+                        url: conv.data.ImageURL,
+                        alt: 'Hint Image'
+                    }),
+                    display: 'WHITE',
+                    title: conv.data.HintText
+                }));
+            }
+        } else if (conv.data.Hint != 0) {
+            // speak the hint
+            let ssml;
+            ssml = '<speak>' +
+                'It is a wrong answer.' +
+                '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
+                '<break time="200ms"/>' +
+                conv.data.Hint +
+                '</speak>';
+            conv.ask(ssml);
+        } else {
+            // Show only that it is a wrong answer
+            let ssml;
             ssml = '<speak>' +
                 'It is a wrong answer.' +
                 '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
@@ -393,43 +418,6 @@ app.intent('Provides-Answer-First', async (conv) => {
                 'Please try again.' +
                 '</speak>';
             conv.ask(ssml);
-        } else if (conv.data.Hint != 0 && conv.data.HintImageURL == 0) {
-            ssml = '<speak>' +
-                'It is a wrong answer.' +
-                '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
-                '<break time="200ms"/>' +
-                conv.data.Hint +
-                '</speak>';
-            conv.ask(ssml);
-        } else if (conv.data.Hint == 0 && conv.data.HintImageURL != 0) {
-            ssml = '<speak>' +
-                'It is a wrong answer.' +
-                '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
-                'See the hint image.' +
-                '</speak>';
-            conv.ask(ssml);
-            conv.ask(new BasicCard({
-                image: new Image({
-                    url: conv.data.HintImageURL,
-                    alt: 'Hint Image'
-                }),
-                display: 'WHITE'
-            }));
-        } else {
-            ssml = '<speak>' +
-                'It is a wrong answer.' +
-                '<audio src="https://www.soundjay.com/misc/fail-buzzer-01.mp3"></audio>' +
-                '<break time="200ms"/>' +
-                conv.data.Hint +
-                '</speak>';
-            conv.ask(ssml);
-            conv.ask(new BasicCard({
-                image: new Image({
-                    url: conv.data.HintImageURL,
-                    alt: 'Hint Image'
-                }),
-                display: 'WHITE'
-            }));
         }
     }
 });
@@ -453,24 +441,23 @@ app.intent('Provides-Answer-Second', async (conv) => {
         'Answer2': userAnswer
     }
 
-    let id = await ad.getProgressByID(conv.data.Type, conv.data.QID, conv.data.studentName);
+    let id = await ad.getProgressByID(conv.data.studentName, conv.data.QID);
 
     if (id == 0) {
-        console.log('Error at Update Progress.')
+        console.log('Error at getProcessByID [Answer -Two]')
     } else {
-        ad.updateProgress(conv.data.Type, id, fields)
+        ad.updateProgress(conv.data.studentName, id, fields)
             .then((flag) => {
                 // Use the flag here
             })
             .catch((error) => {
-                console.log('Error at Update Progress Answer Two --> ', error);
+                console.log('Error at updateProgress [Answer - Two] --> ', error);
             });
     }
 
+    // Generate list from actual answeres in case different answers
     let ansTempList = actualAnswer.split(',');
-
     let ansList = [];
-
     ansTempList.forEach(element => {
         ansList.push(element.toLowerCase());
     });
@@ -508,8 +495,8 @@ app.intent('Provides-Answer-Second', async (conv) => {
             // Update student level
             let cLevel = conv.data[`${conv.data.Type.toLowerCase()}Level`];
 
+            // Generate the string LevelX
             let nLevel = parseInt(cLevel.split('l')[1]) + 1;
-
             if (conv.data.Type === 'Memo') {
                 fields = {
                     'Memo': `Level${nLevel}`
@@ -551,17 +538,11 @@ app.intent('Provides-Answer-Second', async (conv) => {
                 if (message['Image'] == 0) {
                     let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Next Question', 'Menu'));
+                    conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 } else {
                     let m = message['Message'];
                     conv.ask(m);
-                    conv.ask(new Suggestions('Next Question', 'Menu'));
-                    // conv.ask(new BasicCard({
-                    //     image: new Image({
-                    //         url: message['ImageURL'],
-                    //         alt: 'Level Up Image'
-                    //     })
-                    // }));
+                    conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 }
 
             } else {
@@ -570,7 +551,7 @@ app.intent('Provides-Answer-Second', async (conv) => {
 
         } else {
             conv.contexts.set('await-continue-yes', 1);
-            conv.ask(new Suggestions('Next Question', 'Menu'));
+            conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
         }
 
     } else {
@@ -584,7 +565,7 @@ app.intent('Provides-Answer-Second', async (conv) => {
         // Ask new question here
         conv.contexts.set('await-continue-yes', 1);
         conv.ask(`Not quite. The answer is ` + actualAnswer + `.`);
-        conv.ask(new Suggestions('Next Question', 'Menu'));
+        conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
     }
 });
 
@@ -623,6 +604,7 @@ app.intent('E-Shop-Checkout', (conv) => {
     conv.close(`It takes ${conv.data.checkoutPrice} Euros.`);
 });
 
+// Continue yes
 app.intent('Continue-Yes', (conv) => {
     // Call an event to continue asking a new question
     conv.followup('question', {
@@ -630,14 +612,17 @@ app.intent('Continue-Yes', (conv) => {
     });
 });
 
+// Continue no
 app.intent('Continue-No', (conv) => {
     conv.ask(`Thank you ${conv.data.studentName} for using the app.`);
 });
 
+// Cancel button
 app.intent('Cancel', (conv) => {
     conv.close(`Thank you ${conv.data.studentName} for using the app.`);
 });
 
+// Default fallback intent
 app.intent('Default Fallback Intent', (conv) => {
 
     conv.data.fallbackCount = conv.data.fallbackCount + 1;
@@ -658,6 +643,36 @@ app.intent('Default Fallback Intent', (conv) => {
         conv.ask('Please say it again.');
     } else {
         conv.close('Sorry, I am facing trouble hearing you, try again after sometime.');
+    }
+});
+
+// Show result
+app.intent('Show Results', async (conv) => {
+
+    // Get student result
+    let result = await ad.getStudentLevels(conv.data.studentName);
+
+    // Check the status
+    if (result['status'] == 1) {
+        conv.contexts.set('await-quiz-type', 1);
+        conv.ask('Your result is shown in the table below.');
+        conv.ask(new Table({
+            dividers: true,
+            columns: ['Question Type', 'Level'],
+            rows: [
+                ['Memo', result['memoLevel']],
+                ['Consepts', result['conseptsLevel']],
+                ['Clock', result['clockLevel']],
+                ['Math', result['mathLevel']],
+            ],
+        }));
+        conv.ask(`Okay ${conv.data.studentName}, What would you like to practice now?`);
+        conv.ask(new Suggestions('Memo', 'Consepts', 'Clock', 'Math', 'E-Shop'));
+    } else {
+        conv.contexts.set('await-quiz-type', 1);
+        conv.ask('Sorry, we did not find your result at this time.');
+        conv.ask(`Hello ${conv.data.studentName}, What would you like to practice now?`);
+        conv.ask(new Suggestions('Memo', 'Consepts', 'Clock', 'Math', 'E-Shop'));
     }
 });
 
