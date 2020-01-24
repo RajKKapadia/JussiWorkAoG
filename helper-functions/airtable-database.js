@@ -248,7 +248,7 @@ const updateProgress = async (studentName, id, fields) => {
 // Question Answer
 const getCongratsMessage = async (type) => {
 
-    url = `https://api.airtable.com/v0/${QA_APP_ID}/CongratulationMessages?view=Grid%20view&filterByFormula=(AND({Name}="${type}"))&maxRecords=1`;
+    url = `https://api.airtable.com/v0/${QA_APP_ID}/CongratulationMessages?view=Grid%20view&filterByFormula=(AND({Name}="${type}"))`;
     headers = {
         Authorization: 'Bearer ' + QA_API_KEY
     }

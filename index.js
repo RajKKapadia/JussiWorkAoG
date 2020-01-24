@@ -174,6 +174,11 @@ app.intent('Ask-Question', async (conv) => {
     let cqn = conv.data.uaList[cn];
 
     if (cqn === undefined) {
+
+        // Reset the question number
+        conv.data.qn = 0;
+        cn = conv.data.qn;
+
         let qList = [];
         // Generate question list
         if (conv.data.Type === 'Memo') {
@@ -186,8 +191,9 @@ app.intent('Ask-Question', async (conv) => {
             qList = await ad.getAllQuestionList('Clock', conv.data.clockLevel);
         }
         conv.data.uaList = qList;
-        cqn = conv.data.uaList[cn];
     }
+
+    cqn = conv.data.uaList[cn];
 
     // Get the question data
     let record = await ad.getNewQuestion(conv.data.Type, cqn);
@@ -340,14 +346,14 @@ app.intent('Provides-Answer-First', async (conv) => {
                 // Ask new question here
                 conv.contexts.set('await-continue-yes', 1);
 
-                let message = await ad.getCongratsMessage('Level Up');
-
-                if (message['Image'] == 0) {
-                    let m = message['Message'];
+                let messageLevelUp = await ad.getCongratsMessage('Level Up');
+            
+                if (messageLevelUp['Image'] == 0) {
+                    let m = messageLevelUp['Message'];
                     conv.ask(m);
                     conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 } else {
-                    let m = message['Message'];
+                    let m = messageLevelUp['Message'];
                     conv.ask(m);
                     conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 }
@@ -430,7 +436,6 @@ app.intent('Provides-Answer-Second', async (conv) => {
     let userAnswer = conv.query;
 
     if (userAnswer.toLowerCase() === 'menu') {
-        console.log('came here.');
         conv.followup('menu', {
             type: 'menu'
         });
@@ -444,7 +449,7 @@ app.intent('Provides-Answer-Second', async (conv) => {
     let id = await ad.getProgressByID(conv.data.studentName, conv.data.QID);
 
     if (id == 0) {
-        console.log('Error at getProcessByID [Answer -Two]')
+        console.log('Error at getProcessByID [Answer - Two]')
     } else {
         ad.updateProgress(conv.data.studentName, id, fields)
             .then((flag) => {
@@ -533,14 +538,14 @@ app.intent('Provides-Answer-Second', async (conv) => {
 
             if (flag == 1) {
 
-                let message = await ad.getCongratsMessage('Level Up');
+                let messageLevelUp = await ad.getCongratsMessage('Level Up');
 
-                if (message['Image'] == 0) {
-                    let m = message['Message'];
+                if (messageLevelUp['Image'] == 0) {
+                    let m = messageLevelUp['Message'];
                     conv.ask(m);
                     conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 } else {
-                    let m = message['Message'];
+                    let m = messageLevelUp['Message'];
                     conv.ask(m);
                     conv.ask(new Suggestions('Next Question', 'Menu', 'Show Results'));
                 }
